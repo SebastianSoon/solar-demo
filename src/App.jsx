@@ -1,8 +1,8 @@
-import SolarROISimulator from './solar.jsx'
+import SolarSimulator from './solar.jsx'
 
 function App() {
   return (
-    <SolarROISimulator />
+    <SolarSimulator />
   )
 }
 

@@ -3,3 +3,11 @@
 body {
   margin: 0;
 }
+
+button {
+  cursor: pointer;
+}
+
+button.cursor-not-allowed {
+  cursor: not-allowed;
+}

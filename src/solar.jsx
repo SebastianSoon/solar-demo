@@ -87,7 +87,7 @@ const APPLIANCES = [
   { id: 'dw', name: 'Dishwasher', icon: <Droplets className="w-5 h-5 text-white" />, load: 1.2, color: 'bg-indigo-500', costColor: 'text-indigo-600' },
 ];
 
-export default function SolarROISimulator() {
+export default function SolarSimulator() {
   const [step, setStep] = useState(1); // 1: Audit, 2: Strategy, 3: Simulation, 4: Report
   
   // Phase 1: Audit State
@@ -147,7 +147,7 @@ export default function SolarROISimulator() {
     // Check constraints
     const isWorkHours = hour >= 9 && hour <= 17;
     const isOfficeWorker = audit.residentProfile === '9-to-5';
-    const isLocked = isOfficeWorker && isWorkHours && !hasBattery;
+    const isLocked = isOfficeWorker && isWorkHours;
 
     if (isLocked) {
         alert("Client is at work during these hours! Add a battery to schedule usage here.");
@@ -183,7 +183,7 @@ export default function SolarROISimulator() {
 
     let day = 0;
     const totalDays = 30;
-    const animationSpeed = 50; // ms per tick
+    const animationSpeed = 75; // ms per tick
 
     const interval = setInterval(() => {
       day += 0.5; // Half day increments for faster anim
@@ -402,7 +402,7 @@ export default function SolarROISimulator() {
                 {Array.from({ length: 24 }).map((_, i) => {
                     const isSunWindow = i >= 11 && i <= 15;
                     const isWorkHours = i >= 9 && i <= 17;
-                    const isLocked = audit.residentProfile === '9-to-5' && isWorkHours && !hasBattery;
+                    const isLocked = audit.residentProfile === '9-to-5' && isWorkHours;
                     const appliances = schedule[i] || [];
 
                     let bgClass = "bg-slate-100";
@@ -414,7 +414,8 @@ export default function SolarROISimulator() {
                             key={i}
                             onClick={() => toggleScheduleItem(i)}
                             className={`
-                                relative h-14 sm:h-16 md:h-20 rounded-md border flex flex-col items-center justify-end pb-1 transition-all
+                                relative h-14 sm:h-16 md:h-20 rounded-md border border-slate-200 flex flex-col items-center justify-end pb-1 transition-all
+                                hover:border-slate-300
                                 ${bgClass} 
                                 ${selectedTool && !isLocked ? 'hover:bg-blue-50 ring-2 ring-transparent hover:ring-blue-200' : ''}
                             `}
@@ -839,12 +840,23 @@ export default function SolarROISimulator() {
                   <div className="w-7 h-7 sm:w-8 sm:h-8 bg-orange-500 rounded-lg flex items-center justify-center">
                       <Sun className="text-white w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
-                  <span className="font-bold text-base sm:text-lg tracking-tight">SolarROI<span className="text-orange-500">Pro</span></span>
+                  <span className="font-bold text-base sm:text-lg tracking-tight">Solar <span className="text-orange-500">Pro</span></span>
               </div>
-              <div className="flex gap-1">
-                  {[1,2,3,4].map(s => (
-                      <div key={s} className={`h-1.5 w-5 sm:w-6 rounded-full transition-all ${step >= s ? 'bg-orange-500' : 'bg-slate-200'}`} />
-                  ))}
+              <div className="flex items-center gap-2">
+                  {step > 1 && (
+                      <button
+                          type="button"
+                          onClick={() => setStep(prev => Math.max(1, prev - 1))}
+                          className="px-2.5 py-1 text-xs sm:text-sm font-semibold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-all"
+                      >
+                          Back
+                      </button>
+                  )}
+                  <div className="flex gap-1">
+                      {[1,2,3,4].map(s => (
+                          <div key={s} className={`h-1.5 w-5 sm:w-6 rounded-full transition-all ${step >= s ? 'bg-orange-500' : 'bg-slate-200'}`} />
+                      ))}
+                  </div>
               </div>
           </div>
       </div>
