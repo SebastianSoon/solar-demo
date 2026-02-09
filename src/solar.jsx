@@ -284,7 +284,7 @@ export default function SolarSimulator() {
     const testimonials = [
         {
             title: "Puchong Semi-D",
-            image: "../../public/house1.jpeg",
+            image: "/house1.jpeg",
             usage: "1,230 kW",
             panels: "18 pieces",
             battery: "None",
@@ -295,7 +295,7 @@ export default function SolarSimulator() {
         },
         {
             title: "Rawang Semi-D",
-            image: "../../public/house2.jpeg",
+            image: "/house2.jpeg",
             usage: "1,500 kW",
             panels: "22 pieces",
             battery: "2 Units",
