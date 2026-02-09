@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Sun, 
-    Battery, 
+  Battery, 
   AlertTriangle, 
   CheckCircle2, 
   Home, 
@@ -15,7 +15,19 @@ import {
   Fish,
   PiggyBank,
   Moon,
-  Cloud
+  Cloud,
+  ShieldCheck,
+  Smartphone,
+  FileText,
+  CreditCard,
+  Hammer,
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  HelpCircle,
+  Check,
+  X,
+  ArrowRightCircle
 } from 'lucide-react';
 
 /**
@@ -53,12 +65,19 @@ const calculateKwhToBill = (kwh) => {
 };
 
 export default function SolarSimulator() {
-    const [step, setStep] = useState(0); // 0: Testimonials, 1: Welcome, 2: Audit, 3: Strategy, 4: Simulation, 5: Report
+    // Steps:
+    // 0: Testimonial 1, 1: Testimonial 2, 2: Welcome, 3: Audit, 4: Strategy, 5: Simulation, 6: Report
+    // 7: Service Process, 8: USP, 9: FAQ
+    const [step, setStep] = useState(0); 
+    const [activeServiceStep, setActiveServiceStep] = useState(0);
+    const [activeUSPIndex, setActiveUSPIndex] = useState(0); 
+    const [showBatteryInfo, setShowBatteryInfo] = useState(false); 
+    const [batterySimState, setBatterySimState] = useState('day'); // 'day' | 'night'
   
   // Phase 1: Audit State
   const [audit, setAudit] = useState({
-        phone: '',
-        monthlyKwh: 900,
+    phone: '',
+    monthlyKwh: 900,
     housePhase: 'Single',
     roofType: 'Pitched',
     futureEV: false,
@@ -66,7 +85,7 @@ export default function SolarSimulator() {
     futurePond: false
   });
 
-        const [monthlyKwhInput, setMonthlyKwhInput] = useState('900');
+  const [monthlyKwhInput, setMonthlyKwhInput] = useState('900');
 
   // Phase 2: Strategy State
     const [dayUsagePercent, setDayUsagePercent] = useState(60);
@@ -88,6 +107,22 @@ export default function SolarSimulator() {
 
     // Phase 4: Report State
     const [finalReport, setFinalReport] = useState(null);
+
+    // FAQ State
+    const [openFaqIndex, setOpenFaqIndex] = useState(null);
+
+    // Battery Visualizer Loop
+    useEffect(() => {
+        let interval;
+        if (showBatteryInfo) {
+            // Reset to day when opening
+            setBatterySimState('day');
+            interval = setInterval(() => {
+                setBatterySimState(prev => prev === 'day' ? 'night' : 'day');
+            }, 3000); // 3-second cycle for each phase
+        }
+        return () => clearInterval(interval);
+    }, [showBatteryInfo]);
 
   // --- Derived Calculations ---
     const adjustedMonthlyKwh = useMemo(() => {
@@ -162,19 +197,7 @@ export default function SolarSimulator() {
         const monthlyTnbCost = dailyTnbCost * 30;
 
         return {
-            A,
-            B,
-            C,
-            B1,
-            C1,
-            D,
-            E,
-            F,
-            G,
-            H,
-            I,
-            J,
-            K,
+            A, B, C, B1, C1, D, E, F, G, H, I, J, K,
             dailyTnbKwh,
             dailyTnbCost,
             dailyExportKwh,
@@ -184,7 +207,7 @@ export default function SolarSimulator() {
     };
 
     const runSimulation = () => {
-    setStep(4);
+    setStep(5); // Adjusted step index
     setSimProgress(0);
     
     // Reset stats
@@ -226,7 +249,7 @@ export default function SolarSimulator() {
                 if (day >= totalDays) {
         clearInterval(interval);
         calculateFinalReport(currentStats);
-                setTimeout(() => setStep(5), 1000);
+                setTimeout(() => setStep(6), 1000); // Adjusted step index
       }
     }, animationSpeed);
   };
@@ -256,75 +279,132 @@ export default function SolarSimulator() {
 
   // --- Render Components ---
 
-  const renderTestimonials = () => (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+  const renderTestimonialScreen = (index) => {
+    // Data for the two testimonials
+    const testimonials = [
+        {
+            title: "Puchong Semi-D",
+            image: "../../public/house1.jpeg",
+            usage: "1,230 kW",
+            panels: "18 pieces",
+            battery: "None",
+            monthlySaving: "RM 481",
+            monthlySavingPercent: "78%",
+            totalSaving: "RM 173,150",
+            nextButtonText: "Next Result"
+        },
+        {
+            title: "Rawang Semi-D",
+            image: "../../public/house2.jpeg",
+            usage: "1,500 kW",
+            panels: "22 pieces",
+            battery: "2 Units",
+            monthlySaving: "RM 633",
+            monthlySavingPercent: "84%",
+            totalSaving: "RM 227,880",
+            nextButtonText: "Begin Your Plan"
+        }
+    ];
+
+    const data = testimonials[index];
+
+    return (
+        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
             <div className="bg-white p-5 sm:p-6 md:p-8 rounded-3xl shadow-sm border border-slate-200">
                 <div className="flex items-center justify-center mb-4">
                     <img
                         src="https://homifytech.com.my/wp-content/uploads/2025/04/homi-%E6%A9%AB-1536x369.png"
                         alt="HomifyTech"
                         className="h-8 sm:h-9 md:h-10 w-auto"
+                        onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.style.display = 'none';
+                            e.target.parentNode.innerHTML = '<span class="text-xl font-bold text-slate-800">HomifyTech</span>';
+                        }}
                     />
                 </div>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-800 text-center">
                     Real Client Results
                 </h2>
-                <p className="text-sm text-slate-500 text-center mt-2">
-                    Two recent semi-D projects with verified savings.
-                </p>
-
-                <div className="mt-6 grid grid-cols-1 gap-5">
-                    <div className="rounded-2xl border border-slate-200 overflow-hidden">
-                        <img
-                            src="/house1.jpeg"
-                            alt="Puchong Semi-D"
-                            className="w-full h-44 sm:h-52 object-cover"
-                        />
-                        <div className="p-4 sm:p-5 space-y-1 text-sm text-slate-600">
-                            <div className="text-base font-bold text-slate-800">Puchong Semi-D</div>
-                            <div>Total Electricity Usage: 1230kW</div>
-                            <div>Solar Panel: 18 pieces</div>
-                            <div>Battery: None</div>
-                            <div>Total Saving: 78% (RM481 per month)</div>
-                            <div>Total Savings 30 years: RM173,150</div>
-                        </div>
+                <div className="flex justify-center mt-2">
+                    <div className="flex gap-1.5">
+                        <div className={`h-1.5 w-8 rounded-full transition-colors ${index === 0 ? 'bg-slate-800' : 'bg-slate-200'}`}></div>
+                        <div className={`h-1.5 w-8 rounded-full transition-colors ${index === 1 ? 'bg-slate-800' : 'bg-slate-200'}`}></div>
                     </div>
+                </div>
 
-                    <div className="rounded-2xl border border-slate-200 overflow-hidden">
-                        <img
-                            src="/house2.jpeg"
-                            alt="Rawang Semi-D"
-                            className="w-full h-44 sm:h-52 object-cover"
-                        />
-                        <div className="p-4 sm:p-5 space-y-1 text-sm text-slate-600">
-                            <div className="text-base font-bold text-slate-800">Rawang Semi-D</div>
-                            <div>Total Electricity Usage: 1500kW</div>
-                            <div>Solar Panel: 22 pieces</div>
-                            <div>Battery: 2 Batteries</div>
-                            <div>Total Saving: 84% (RM633 per month)</div>
-                            <div>Total Savings 30 years: RM227,880</div>
+                <div className="mt-6">
+                    <div className="rounded-2xl border border-slate-200 overflow-hidden group bg-white shadow-sm hover:shadow-md transition-all">
+                        <div className="overflow-hidden">
+                            <img
+                                src={data.image}
+                                alt={data.title}
+                                className="w-full h-48 sm:h-64 object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                        </div>
+                        <div className="p-5 sm:p-6 flex flex-col justify-between h-full">
+                            <div>
+                                <div className="text-lg font-bold text-slate-800 mb-4">{data.title}</div>
+                                
+                                <div className="space-y-2 text-sm text-slate-600 mb-6">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                                        <span>Total Electricity Usage: <span className="font-semibold text-slate-900">{data.usage}</span></span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                                        <span>Solar Panel: <span className="font-semibold text-slate-900">{data.panels}</span></span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                                        <span>Battery: <span className="font-semibold text-slate-900">{data.battery}</span></span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="bg-[#145A0D]/5 border border-[#145A0D]/10 rounded-xl p-5">
+                                <div className="flex justify-between items-end mb-4 border-b border-[#145A0D]/10 pb-4">
+                                    <div>
+                                        <div className="text-[10px] font-bold uppercase text-[#145A0D]/70 mb-0.5">Monthly Savings</div>
+                                        <div className="text-3xl font-black text-[#145A0D] leading-none">{data.monthlySaving}</div>
+                                    </div>
+                                    <div className="text-xs font-bold text-[#145A0D] bg-[#145A0D]/10 px-3 py-1.5 rounded-lg">
+                                        {data.monthlySavingPercent} Saved
+                                    </div>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xs font-bold text-slate-500 uppercase">30-Year Savings</span>
+                                    <span className="font-bold text-slate-800 text-base">{data.totalSaving}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <button
-                onClick={() => setStep(1)}
+                onClick={() => setStep(step + 1)}
                 className="w-full py-3.5 sm:py-4 rounded-2xl text-base sm:text-lg font-bold flex items-center justify-center transition-all shadow-lg shadow-slate-200 bg-[#145A0D] text-white hover:bg-[#0F450A]"
             >
-                Continue <ArrowRight className="ml-2 w-5 h-5" />
+                {data.nextButtonText} <ArrowRight className="ml-2 w-5 h-5" />
             </button>
         </div>
-  );
+    );
+  };
 
   const renderWelcome = () => (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="bg-white p-5 sm:p-6 md:p-8 rounded-3xl shadow-sm border border-slate-200">
                 <div className="flex items-center justify-center mb-4">
-                    <img
+                     <img
                         src="https://homifytech.com.my/wp-content/uploads/2025/04/homi-%E6%A9%AB-1536x369.png"
                         alt="HomifyTech"
                         className="h-8 sm:h-9 md:h-10 w-auto"
+                        onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.style.display = 'none';
+                            e.target.parentNode.innerHTML = '<span class="text-xl font-bold text-slate-800">HomifyTech</span>';
+                        }}
                     />
                 </div>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-800 text-center">
@@ -336,7 +416,7 @@ export default function SolarSimulator() {
 
                 <div className="mt-6">
                     <label className="block text-sm font-semibold text-slate-600 mb-2">Phone Number</label>
-                    <div className="flex items-center w-full rounded-2xl border px-4 py-3 bg-white transition-all">
+                    <div className="flex items-center w-full rounded-2xl border px-4 py-3 bg-white transition-all focus-within:ring-2 focus-within:ring-[#145A0D]/20 focus-within:border-[#145A0D]">
                         <span className="text-sm font-semibold text-slate-500 pr-3 border-r border-slate-200">+60</span>
                         <input
                             type="tel"
@@ -344,7 +424,7 @@ export default function SolarSimulator() {
                             placeholder="12 345 6789"
                             value={audit.phone}
                             onChange={(e) => setAudit({...audit, phone: e.target.value})}
-                            className="w-full pl-3 text-base font-medium outline-none"
+                            className="w-full pl-3 text-base font-medium outline-none text-slate-800 placeholder:text-slate-300"
                         />
                     </div>
                     <div className="text-xs text-slate-500 mt-2">Digits only. Spaces allowed.</div>
@@ -352,7 +432,7 @@ export default function SolarSimulator() {
             </div>
 
             <button 
-                onClick={() => setStep(2)}
+                onClick={() => setStep(3)} // Adjusted to go to Audit (Step 3)
                 disabled={!isPhoneValid}
                 className={`w-full py-3.5 sm:py-4 rounded-2xl text-base sm:text-lg font-bold flex items-center justify-center transition-all shadow-lg shadow-slate-200 ${isPhoneValid ? 'bg-[#145A0D] text-white hover:bg-[#0F450A]' : 'bg-[#145A0D]/15 text-[#145A0D]/50 cursor-not-allowed'}`}
             >
@@ -365,85 +445,85 @@ export default function SolarSimulator() {
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="bg-white p-4 sm:p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200">
                 <h2 className="text-lg sm:text-xl font-bold text-slate-800 mb-4 flex items-center">
-            <Calculator className="w-5 h-5 mr-2 text-[#145A0D]"/> Phase 1: The Audit
-        </h2>
+                    <Calculator className="w-5 h-5 mr-2 text-[#145A0D]"/> Phase 1: The Audit
+                </h2>
         
-        {/* Monthly Usage */}
-        <div className="mb-8">
-            <label className="block text-sm font-semibold text-slate-600 mb-2">Monthly Usage (kW)</label>
-            <div className="flex items-center gap-2">
-                <input
-                    type="number"
-                    min="200"
-                    max="3000"
-                    step="50"
-                    value={monthlyKwhInput}
-                    onChange={(e) => {
-                        const rawValue = e.target.value;
-                        setMonthlyKwhInput(rawValue);
-                        if (rawValue !== '') {
-                            const parsedValue = Number(rawValue);
-                            if (!Number.isNaN(parsedValue)) {
-                                setAudit({...audit, monthlyKwh: parsedValue});
-                            }
-                        }
-                    }}
-                    onBlur={() => {
-                        const parsedValue = Number(monthlyKwhInput);
-                        const normalizedValue = Number.isNaN(parsedValue)
-                            ? audit.monthlyKwh
-                            : Math.min(3000, Math.max(200, parsedValue));
-                        setAudit({...audit, monthlyKwh: normalizedValue});
-                        setMonthlyKwhInput(String(normalizedValue));
-                    }}
-                    className="w-28 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800"
-                />
-                <span className="text-sm font-semibold text-slate-500">kW</span>
-            </div>
-            <div className="mt-2 text-xs text-slate-500">
-                Future plans can increase this estimate to {adjustedMonthlyKwh} kW.
-            </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-6">
-            <div className="space-y-4">
-                <label className="text-sm font-semibold text-slate-600">Future Plans</label>
-                <div className="flex gap-2">
-                    <button 
-                        onClick={() => setAudit({...audit, futureEV: !audit.futureEV})}
-                        className={`flex-1 py-3 rounded-xl border-2 flex flex-col items-center justify-center gap-1 transition-all ${audit.futureEV ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-200 text-slate-400'}`}
-                    >
-                        <Car className="w-5 h-5"/> <span className="text-xs font-bold">EV</span>
-                    </button>
-                    <button 
-                        onClick={() => setAudit({...audit, futurePool: !audit.futurePool})}
-                        className={`flex-1 py-3 rounded-xl border-2 flex flex-col items-center justify-center gap-1 transition-all ${audit.futurePool ? 'border-cyan-500 bg-cyan-50 text-cyan-700' : 'border-slate-200 text-slate-400'}`}
-                    >
-                        <Waves className="w-5 h-5"/> <span className="text-xs font-bold">Pool</span>
-                    </button>
-                    <button 
-                        onClick={() => setAudit({...audit, futurePond: !audit.futurePond})}
-                        className={`flex-1 py-3 rounded-xl border-2 flex flex-col items-center justify-center gap-1 transition-all ${audit.futurePond ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-400'}`}
-                    >
-                        <Fish className="w-5 h-5"/> <span className="text-xs font-bold">Pond</span>
-                    </button>
-                </div>
-                {(audit.futureEV || audit.futurePool || audit.futurePond) && (
-                    <div className="text-xs text-slate-500">
-                        Estimated monthly usage increases to {adjustedMonthlyKwh} kW.
+                {/* Monthly Usage */}
+                <div className="mb-8">
+                    <label className="block text-sm font-semibold text-slate-600 mb-2">Monthly Usage (kW)</label>
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="number"
+                            min="200"
+                            max="3000"
+                            step="50"
+                            value={monthlyKwhInput}
+                            onChange={(e) => {
+                                const rawValue = e.target.value;
+                                setMonthlyKwhInput(rawValue);
+                                if (rawValue !== '') {
+                                    const parsedValue = Number(rawValue);
+                                    if (!Number.isNaN(parsedValue)) {
+                                        setAudit({...audit, monthlyKwh: parsedValue});
+                                    }
+                                }
+                            }}
+                            onBlur={() => {
+                                const parsedValue = Number(monthlyKwhInput);
+                                const normalizedValue = Number.isNaN(parsedValue)
+                                    ? audit.monthlyKwh
+                                    : Math.min(3000, Math.max(200, parsedValue));
+                                setAudit({...audit, monthlyKwh: normalizedValue});
+                                setMonthlyKwhInput(String(normalizedValue));
+                            }}
+                            className="w-32 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#145A0D]/20 focus:border-[#145A0D]"
+                        />
+                        <span className="text-sm font-semibold text-slate-500">kW</span>
                     </div>
-                )}
+                    <div className="mt-2 text-xs text-slate-500">
+                        Future plans can increase this estimate to {adjustedMonthlyKwh} kW.
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-6">
+                    <div className="space-y-4">
+                        <label className="text-sm font-semibold text-slate-600">Future Plans</label>
+                        <div className="flex gap-2">
+                            <button 
+                                onClick={() => setAudit({...audit, futureEV: !audit.futureEV})}
+                                className={`flex-1 py-3 rounded-xl border-2 flex flex-col items-center justify-center gap-1 transition-all ${audit.futureEV ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-200 text-slate-400 hover:bg-slate-50'}`}
+                            >
+                                <Car className="w-5 h-5"/> <span className="text-xs font-bold">EV</span>
+                            </button>
+                            <button 
+                                onClick={() => setAudit({...audit, futurePool: !audit.futurePool})}
+                                className={`flex-1 py-3 rounded-xl border-2 flex flex-col items-center justify-center gap-1 transition-all ${audit.futurePool ? 'border-cyan-500 bg-cyan-50 text-cyan-700' : 'border-slate-200 text-slate-400 hover:bg-slate-50'}`}
+                            >
+                                <Waves className="w-5 h-5"/> <span className="text-xs font-bold">Pool</span>
+                            </button>
+                            <button 
+                                onClick={() => setAudit({...audit, futurePond: !audit.futurePond})}
+                                className={`flex-1 py-3 rounded-xl border-2 flex flex-col items-center justify-center gap-1 transition-all ${audit.futurePond ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-400 hover:bg-slate-50'}`}
+                            >
+                                <Fish className="w-5 h-5"/> <span className="text-xs font-bold">Pond</span>
+                            </button>
+                        </div>
+                        {(audit.futureEV || audit.futurePool || audit.futurePond) && (
+                            <div className="text-xs text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                Estimated monthly usage increases to <strong>{adjustedMonthlyKwh} kW</strong>.
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
-        </div>
-      </div>
       
-                        <button 
-                            onClick={() => setStep(3)}
-                            className="w-full py-3.5 sm:py-4 rounded-2xl text-base sm:text-lg font-bold flex items-center justify-center transition-all shadow-lg shadow-[0_10px_20px_rgba(20,90,13,0.2)] bg-[#145A0D] text-white hover:bg-[#0F450A]"
-                        >
-        Start Strategy Session <ArrowRight className="ml-2 w-5 h-5" />
-      </button>
-    </div>
+            <button 
+                onClick={() => setStep(4)} // Adjusted to go to Strategy (Step 4)
+                className="w-full py-3.5 sm:py-4 rounded-2xl text-base sm:text-lg font-bold flex items-center justify-center transition-all shadow-lg shadow-[0_10px_20px_rgba(20,90,13,0.2)] bg-[#145A0D] text-white hover:bg-[#0F450A]"
+            >
+                Start Strategy Session <ArrowRight className="ml-2 w-5 h-5" />
+            </button>
+        </div>
   );
 
   const renderStrategy = () => {
@@ -543,8 +623,16 @@ export default function SolarSimulator() {
                     </div>
                 </div>
 
-                <div>
-                    <h3 className="text-sm font-semibold text-slate-600 mb-3">3. Battery Storage</h3>
+                <div className="md:col-span-2">
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-semibold text-slate-600">3. Battery Storage</h3>
+                        <button
+                            onClick={() => setShowBatteryInfo(true)}
+                            className="text-[10px] font-bold text-[#145A0D] flex items-center hover:underline bg-[#145A0D]/5 px-2 py-1 rounded-full transition-colors hover:bg-[#145A0D]/10"
+                        >
+                            <HelpCircle className="w-3 h-3 mr-1" /> How it works?
+                        </button>
+                    </div>
                     <div className={`rounded-xl border-2 transition-all p-1 ${hasBattery ? 'border-green-500 bg-green-50' : 'border-slate-200'}`}>
                         <button
                             onClick={() => setHasBattery(!hasBattery)}
@@ -564,19 +652,33 @@ export default function SolarSimulator() {
                         
                         {/* Battery Sizing Slider */}
                         {hasBattery && (
-                            <div className="px-3 pb-3 pt-2 animate-in slide-in-from-top-2 fade-in">
-                                <div className="flex justify-between items-end mb-2">
-                                    <span className="text-xs font-bold text-green-700">Capacity: {batteryCapacity} kWh</span>
+                            <div className="px-3 pb-4 pt-2 animate-in slide-in-from-top-2 fade-in">
+                                <div className="flex justify-between items-center mb-3">
+                                    <span className="text-xs font-bold text-slate-500 uppercase">Select Quantity</span>
+                                    <span className="text-xs font-bold text-green-700 bg-green-50 px-2 py-1 rounded-md border border-green-100">
+                                        Capacity: {batteryCapacity} kWh
+                                    </span>
                                 </div>
-                                <input 
-                                    type="range" min="1" max="6" step="1"
-                                    value={batteryUnits}
-                                    onChange={(e) => setBatteryUnits(Number(e.target.value))}
-                                    className="w-full h-2 bg-green-200 rounded-lg appearance-none cursor-pointer accent-green-600"
-                                />
-                                <div className="flex justify-between text-[9px] text-green-600/60 mt-1 font-medium px-1">
-                                    <span>1 Unit (10kWh)</span>
-                                    <span>6 Units (60kWh)</span>
+                                
+                                <div className="grid grid-cols-6 gap-2">
+                                    {[1, 2, 3, 4, 5, 6].map((unit) => (
+                                        <button
+                                            key={unit}
+                                            onClick={() => setBatteryUnits(unit)}
+                                            className={`
+                                                h-10 rounded-lg text-sm font-bold border-2 transition-all flex flex-col items-center justify-center
+                                                ${batteryUnits === unit 
+                                                    ? 'bg-[#145A0D] border-[#145A0D] text-white shadow-md scale-105 z-10' 
+                                                    : 'bg-white border-slate-200 text-slate-400 hover:border-green-300 hover:text-green-600 hover:bg-green-50'
+                                                }
+                                            `}
+                                        >
+                                            <span>{unit}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="text-center text-[10px] text-slate-400 mt-2 font-medium">
+                                    Each unit adds 10kWh of storage
                                 </div>
                             </div>
                         )}
@@ -736,12 +838,12 @@ export default function SolarSimulator() {
   const renderReport = () => {
     if (!finalReport) return null;
 
-        const savingsPercent = finalReport.oldBill > 0
-            ? Math.max(0, Math.round((finalReport.monthlySavings / finalReport.oldBill) * 100))
-            : 0;
+    const savingsPercent = finalReport.oldBill > 0
+        ? Math.max(0, Math.round((finalReport.monthlySavings / finalReport.oldBill) * 100))
+        : 0;
 
-        const savingsAmount = Math.max(0, Math.round(finalReport.monthlySavings));
-        const formula = computeFormula();
+    const savingsAmount = Math.max(0, Math.round(finalReport.monthlySavings));
+    const formula = computeFormula();
 
     const isTrapDetected = finalReport.lossAmount > 50;
 
@@ -855,19 +957,266 @@ export default function SolarSimulator() {
                 </h3>
                 <p className="text-red-700 text-xs mt-1">
                     Exporting <strong>{Math.round(finalReport.totalExported)} kWh</strong> back to grid creates a lost value of <strong>RM {Math.round(finalReport.lossAmount)}/mo</strong>. 
-                    <button onClick={() => {setStep(3); setHasBattery(true);}} className="underline ml-1 font-bold">Add Battery to fix.</button>
+                    <button onClick={() => {setStep(4); setHasBattery(true);}} className="underline ml-1 font-bold">Add Battery to fix.</button>
                 </p>
             </div>
         )}
-
-        <button 
-            onClick={() => { setStep(2); setSimStats({}); setFinalReport(null); }}
-            className="w-full py-3.5 sm:py-4 bg-[#145A0D] text-white rounded-2xl font-bold hover:bg-[#0F450A] transition-all flex items-center justify-center shadow-xl"
-        >
-            <RefreshCcw className="w-4 h-4 mr-2" /> Start New Client Audit
-        </button>
+        
+        <div className="grid grid-cols-1 gap-3">
+             <button 
+                onClick={() => setStep(7)} // Continue to Service Process
+                className="w-full py-3.5 sm:py-4 bg-[#145A0D] text-white rounded-2xl font-bold hover:bg-[#0F450A] transition-all flex items-center justify-center shadow-xl"
+            >
+                Next: Our Service Process <ArrowRight className="w-4 h-4 ml-2" />
+            </button>
+            <button 
+                onClick={() => { setStep(2); setSimStats({}); setFinalReport(null); }} // Reset to Welcome
+                className="w-full py-2 text-slate-400 text-sm font-semibold hover:text-slate-600"
+            >
+                <RefreshCcw className="w-3 h-3 inline mr-1" /> Start New Audit
+            </button>
+        </div>
       </div>
     );
+  };
+
+  const renderServiceProcess = () => {
+      const steps = [
+          { icon: <CreditCard className="w-5 h-5"/>, title: "Booking", desc: "Pay a fully refundable deposit of RM1,000 to lock in your promo price and installation slot." },
+          { icon: <FileText className="w-5 h-5"/>, title: "Proposal", desc: "We visit your site and prepare a final technical proposal with precise financial ROI calculations." },
+          { icon: <CheckCircle2 className="w-5 h-5"/>, title: "Finalize Payment", desc: "Once you approve the proposal, proceed with the balance payment to trigger the equipment delivery." },
+          { icon: <Hammer className="w-5 h-5"/>, title: "Installation", desc: "Our certified technical team completes the mounting, wiring, and testing in just 3 days." },
+          { icon: <Clock className="w-5 h-5"/>, title: "Maintenance", desc: "Enjoy peace of mind with our 30-day post-installation monitoring and lifetime support access." },
+      ];
+
+      return (
+        <div className="space-y-6 animate-in slide-in-from-right-8 duration-500 pb-10">
+            <div className="bg-white p-5 sm:p-6 md:p-8 rounded-3xl shadow-sm border border-slate-200">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-800 text-center mb-2">
+                    Our Service Process
+                </h2>
+                <p className="text-sm text-slate-500 text-center mb-8">
+                    Click on each step to see how we work.
+                </p>
+                
+                <div className="relative pl-2">
+                     {/* Steps */}
+                    <div className="space-y-4">
+                        {steps.map((s, i) => {
+                            const isActive = activeServiceStep === i;
+                            const isCompleted = activeServiceStep > i;
+
+                            return (
+                                <div key={i} className="relative z-10">
+                                    {/* Connecting Line */}
+                                    {i !== steps.length - 1 && (
+                                        <div 
+                                            className={`absolute left-[22px] top-14 bottom-[-24px] w-0.5 -z-10 transition-colors duration-500 ${isCompleted ? 'bg-[#145A0D]' : 'bg-slate-200'}`} 
+                                        />
+                                    )}
+
+                                    <button 
+                                        onClick={() => setActiveServiceStep(i)}
+                                        className={`w-full text-left relative flex items-start gap-4 p-4 rounded-2xl border-2 transition-all duration-300 group
+                                            ${isActive 
+                                                ? 'bg-white border-[#145A0D] shadow-lg scale-[1.02]' 
+                                                : 'bg-slate-50 border-transparent hover:bg-white hover:border-slate-200'
+                                            }
+                                        `}
+                                    >
+                                        {/* Icon Circle */}
+                                        <div className={`flex-shrink-0 w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all duration-500
+                                            ${isActive 
+                                                ? 'bg-[#145A0D] border-[#145A0D] text-white shadow-md' 
+                                                : isCompleted
+                                                    ? 'bg-[#145A0D] border-[#145A0D] text-white'
+                                                    : 'bg-white border-slate-300 text-slate-400 group-hover:border-slate-400'
+                                            }
+                                        `}>
+                                            {isCompleted ? <Check className="w-6 h-6 animate-in zoom-in" /> : s.icon}
+                                        </div>
+
+                                        <div className="pt-1.5 flex-1">
+                                            <div className="flex justify-between items-center">
+                                                <div className="text-xs font-bold text-slate-400 uppercase mb-0.5">Step {i + 1}</div>
+                                                {isActive && <span className="text-[10px] font-bold text-[#145A0D] bg-[#145A0D]/10 px-2 py-0.5 rounded-full animate-pulse">Current</span>}
+                                            </div>
+                                            <h3 className={`font-bold text-lg transition-colors ${isActive ? 'text-[#145A0D]' : 'text-slate-700'}`}>
+                                                {s.title}
+                                            </h3>
+                                            
+                                            {/* Expandable Content */}
+                                            <div className={`grid transition-all duration-300 ease-in-out ${isActive ? 'grid-rows-[1fr] opacity-100 mt-2' : 'grid-rows-[0fr] opacity-0'}`}>
+                                                <div className="overflow-hidden">
+                                                    <p className="text-sm text-slate-600 leading-relaxed">
+                                                        {s.desc}
+                                                    </p>
+                                                    {i < steps.length - 1 && (
+                                                        <div 
+                                                            onClick={(e) => { e.stopPropagation(); setActiveServiceStep(i + 1); }}
+                                                            className="mt-3 flex items-center text-xs font-bold text-[#145A0D] hover:underline cursor-pointer"
+                                                        >
+                                                            Next Step <ChevronDown className="w-3 h-3 ml-1" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
+
+            <button 
+                onClick={() => setStep(8)}
+                className="w-full py-3.5 sm:py-4 bg-[#145A0D] text-white rounded-2xl font-bold hover:bg-[#0F450A] transition-all flex items-center justify-center shadow-xl"
+            >
+                Next: Why Choose Us <ArrowRight className="w-4 h-4 ml-2" />
+            </button>
+        </div>
+      );
+  };
+
+  const renderUSP = () => {
+      const usps = [
+          {
+              id: 0,
+              icon: <ShieldCheck className="w-8 h-8"/>,
+              label: "Warranty",
+              title: "10-Year Product Warranty",
+              desc: "1-to-1 Exchange. We replace with a NEW unit if anything goes wrong, giving you absolute peace of mind for a decade.",
+              color: "bg-green-600",
+              lightColor: "bg-green-50",
+              borderColor: "border-green-200"
+          },
+          {
+              id: 1,
+              icon: <Zap className="w-8 h-8"/>,
+              label: "Performance",
+              title: "30-Year Performance",
+              desc: "Guaranteed efficiency and power output stability for three decades. Your investment continues to pay off long term.",
+              color: "bg-slate-800",
+              lightColor: "bg-slate-50",
+              borderColor: "border-slate-200"
+          },
+          {
+              id: 2,
+              icon: <Smartphone className="w-8 h-8"/>,
+              label: "Monitoring",
+              title: "Clear Usage Report",
+              desc: "Track your savings and power generation in real-time via our Homi App. See exactly what you save every day.",
+              color: "bg-blue-600",
+              lightColor: "bg-blue-50",
+              borderColor: "border-blue-200"
+          }
+      ];
+
+      const activeData = usps[activeUSPIndex];
+
+      return (
+        <div className="space-y-6 animate-in slide-in-from-right-8 duration-500 pb-10">
+            <div className="bg-white p-5 sm:p-8 rounded-3xl shadow-sm border border-slate-200">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-800 text-center mb-2">
+                    Why Choose HomifyTech?
+                </h2>
+                <p className="text-sm text-slate-500 text-center mb-8">
+                    Tap an icon below to explore our benefits.
+                </p>
+
+                {/* Interactive Navigation Tabs */}
+                <div className="flex justify-center gap-4 sm:gap-6 mb-2">
+                    {usps.map((item, index) => (
+                        <button
+                            key={index}
+                            onClick={() => setActiveUSPIndex(index)}
+                            className={`flex flex-col items-center gap-2 transition-all duration-300 outline-none group ${activeUSPIndex === index ? 'scale-110 opacity-100' : 'opacity-50 hover:opacity-80 scale-95'}`}
+                        >
+                            <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-white shadow-lg transition-all duration-300 ${activeUSPIndex === index ? item.color : 'bg-slate-300 group-hover:bg-slate-400'}`}>
+                                {React.cloneElement(item.icon, { className: "w-6 h-6 sm:w-7 sm:h-7" })}
+                            </div>
+                            <span className={`text-[10px] font-bold uppercase tracking-wider transition-colors ${activeUSPIndex === index ? 'text-slate-800' : 'text-slate-400'}`}>
+                                {item.label}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+
+                {/* Dynamic Content Card */}
+                <div key={activeUSPIndex} className={`mt-6 rounded-3xl p-6 sm:p-8 border-2 transition-all duration-500 animate-in fade-in slide-in-from-bottom-3 ${activeData.lightColor} ${activeData.borderColor}`}>
+                    <div className="flex flex-col items-center text-center">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 ${activeData.color} text-white shadow-xl shadow-black/10`}>
+                            {React.cloneElement(activeData.icon, { className: "w-6 h-6" })}
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-800 mb-3">{activeData.title}</h3>
+                        <p className="text-sm text-slate-600 leading-relaxed max-w-sm">
+                            {activeData.desc}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <button 
+                onClick={() => setStep(9)}
+                className="w-full py-3.5 sm:py-4 bg-[#145A0D] text-white rounded-2xl font-bold hover:bg-[#0F450A] transition-all flex items-center justify-center shadow-xl"
+            >
+                Next: Common Questions <ArrowRight className="w-4 h-4 ml-2" />
+            </button>
+        </div>
+      );
+  };
+
+  const renderFAQ = () => {
+      const faqs = [
+          { q: "How long does installation take?", a: "Installation is typically completed within 3 days by our certified technical team." },
+          { q: "What happens during rainy days?", a: "Solar panels still generate power during cloudy days, though at reduced efficiency. If you have a battery, your stored night-time energy can act as a buffer." },
+          { q: "Is there a warranty for the inverter?", a: "Yes, inverters typically come with a 5-10 year warranty depending on the brand selected." },
+          { q: "Do you handle the TNB application?", a: "Yes, we handle all the paperwork including NEM application and meter change with TNB." },
+          { q: "What maintenance is required?", a: "Solar panels are very low maintenance. We recommend a simple cleaning every 6 months to ensure maximum efficiency." },
+      ];
+
+      return (
+        <div className="space-y-6 animate-in slide-in-from-right-8 duration-500 pb-10">
+            <div className="bg-white p-5 sm:p-8 rounded-3xl shadow-sm border border-slate-200">
+                <div className="flex justify-center mb-4">
+                    <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600">
+                        <HelpCircle className="w-6 h-6"/>
+                    </div>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-800 text-center mb-8">
+                    Frequently Asked Questions
+                </h2>
+
+                <div className="space-y-3">
+                    {faqs.map((item, index) => (
+                        <div key={index} className="border border-slate-200 rounded-xl overflow-hidden">
+                            <button 
+                                onClick={() => setOpenFaqIndex(openFaqIndex === index ? null : index)}
+                                className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
+                            >
+                                <span className="font-bold text-slate-800 text-sm">{item.q}</span>
+                                {openFaqIndex === index ? <ChevronUp className="w-4 h-4 text-slate-400"/> : <ChevronDown className="w-4 h-4 text-slate-400"/>}
+                            </button>
+                            {openFaqIndex === index && (
+                                <div className="p-4 bg-white text-sm text-slate-600 border-t border-slate-100 animate-in slide-in-from-top-1">
+                                    {item.a}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <button 
+                onClick={() => { setStep(2); setSimStats({}); setFinalReport(null); }} // Loop back to Welcome
+                className="w-full py-3.5 sm:py-4 bg-[#145A0D] text-white rounded-2xl font-bold hover:bg-[#0F450A] transition-all flex items-center justify-center shadow-xl"
+            >
+                <RefreshCcw className="w-4 h-4 mr-2" /> Start New Client Audit
+            </button>
+        </div>
+      );
   };
 
   return (
@@ -877,10 +1226,15 @@ export default function SolarSimulator() {
           <div className="max-w-3xl mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between">
               <div className="flex items-center gap-2">
                   <img
-                      src="https://homifytech.com.my/wp-content/uploads/2025/04/homi-%E6%A9%AB-1536x369.png"
-                      alt="HomifyTech"
-                      className="h-6 sm:h-7 md:h-8 w-auto"
-                  />
+                        src="https://homifytech.com.my/wp-content/uploads/2025/04/homi-%E6%A9%AB-1536x369.png"
+                        alt="HomifyTech"
+                        className="h-6 sm:h-7 md:h-8 w-auto"
+                        onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.style.display = 'none';
+                            e.target.parentNode.innerHTML = '<span class="text-xl font-bold text-slate-800">HomifyTech</span>';
+                        }}
+                    />
               </div>
               <div className="flex items-center gap-2">
                   {step > 0 && (
@@ -893,8 +1247,8 @@ export default function SolarSimulator() {
                       </button>
                   )}
                   <div className="flex gap-1">
-                      {[0,1,2,3,4,5].map(s => (
-                          <div key={s} className={`h-1.5 w-5 sm:w-6 rounded-full transition-all ${step >= s ? 'bg-[#145A0D]' : 'bg-[#145A0D]/20'}`} />
+                      {[0,1,2,3,4,5,6,7,8,9].map(s => (
+                          <div key={s} className={`h-1.5 w-3 sm:w-4 rounded-full transition-all ${step >= s ? 'bg-[#145A0D]' : 'bg-[#145A0D]/20'}`} />
                       ))}
                   </div>
               </div>
@@ -902,13 +1256,119 @@ export default function SolarSimulator() {
       </div>
 
       <main className="max-w-3xl mx-auto px-3 py-4 sm:p-4 md:p-6 pb-16 sm:pb-24">
-                                {step === 0 && renderTestimonials()}
-                                {step === 1 && renderWelcome()}
-                                {step === 2 && renderAudit()}
-                                {step === 3 && renderStrategy()}
-                                {step === 4 && renderSimulation()}
-                                {step === 5 && renderReport()}
+            {step === 0 && renderTestimonialScreen(0)}
+            {step === 1 && renderTestimonialScreen(1)}
+            {step === 2 && renderWelcome()}
+            {step === 3 && renderAudit()}
+            {step === 4 && renderStrategy()}
+            {step === 5 && renderSimulation()}
+            {step === 6 && renderReport()}
+            {step === 7 && renderServiceProcess()}
+            {step === 8 && renderUSP()}
+            {step === 9 && renderFAQ()}
       </main>
+
+      {/* Battery Info Modal */}
+      {showBatteryInfo && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl relative animate-in zoom-in-95 duration-200">
+                <button 
+                    onClick={() => setShowBatteryInfo(false)}
+                    className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 text-slate-400 transition-colors z-10"
+                >
+                    <X className="w-5 h-5" />
+                </button>
+                
+                <h3 className="text-lg font-bold text-slate-800 mb-4 text-center">How Battery Storage Works</h3>
+
+                <div className="relative h-48 bg-slate-50 rounded-2xl border border-slate-200 mb-4 overflow-hidden flex flex-col items-center justify-center p-4">
+                    {/* Sky Background Transition */}
+                    <div className={`absolute inset-0 transition-colors duration-1000 ${batterySimState === 'day' ? 'bg-sky-100' : 'bg-slate-900'}`}></div>
+
+                    {/* Celestial Body */}
+                    <div className={`absolute top-4 left-4 transition-all duration-1000 transform ${batterySimState === 'day' ? 'translate-y-0 opacity-100' : '-translate-y-10 opacity-0'}`}>
+                        <Sun className="w-10 h-10 text-yellow-500 fill-yellow-500 animate-spin-slow" />
+                    </div>
+                    <div className={`absolute top-4 right-4 transition-all duration-1000 transform ${batterySimState === 'night' ? 'translate-y-0 opacity-100' : '-translate-y-10 opacity-0'}`}>
+                        <Moon className="w-8 h-8 text-slate-100 fill-slate-100" />
+                    </div>
+
+                    {/* Main Flow */}
+                    <div className="relative z-10 flex items-center justify-between w-full max-w-[240px]">
+                        {/* Source (Sun/Grid/Nothing) or just Flow */}
+                        <div className={`flex flex-col items-center transition-opacity duration-500 ${batterySimState === 'day' ? 'opacity-100' : 'opacity-30'}`}>
+                             <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md mb-2">
+                                <Sun className="w-6 h-6 text-orange-500" />
+                             </div>
+                             <span className={`text-[10px] font-bold ${batterySimState === 'day' ? 'text-slate-600' : 'text-slate-400 text-white'}`}>Solar</span>
+                        </div>
+
+                        {/* Flow Animation Arrows */}
+                        {batterySimState === 'day' && (
+                             <div className="flex-1 h-1 bg-green-200 mx-2 relative overflow-hidden rounded-full">
+                                 <div className="absolute inset-0 bg-green-500 w-1/2 animate-[slide_1s_infinite]" style={{ animation: 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></div>
+                             </div>
+                        )}
+                        {batterySimState === 'night' && (
+                             <div className="flex-1 h-1 bg-transparent mx-2"></div>
+                        )}
+
+                        {/* Battery */}
+                        <div className="flex flex-col items-center relative">
+                             <div className="w-16 h-24 border-4 border-slate-300 bg-white rounded-xl relative overflow-hidden flex items-end p-1">
+                                 <div className={`w-full bg-green-500 transition-all duration-[3000ms] ease-linear rounded-md ${batterySimState === 'day' ? 'h-full' : 'h-1/4'}`}></div>
+                                 {/* Bolt Icon overlay */}
+                                 <div className="absolute inset-0 flex items-center justify-center">
+                                     <Battery className={`w-8 h-8 ${batterySimState === 'day' ? 'text-green-700 animate-pulse' : 'text-slate-400'}`} />
+                                 </div>
+                             </div>
+                             <span className={`text-[10px] font-bold mt-2 ${batterySimState === 'night' ? 'text-white' : 'text-slate-600'}`}>
+                                {batterySimState === 'day' ? 'Charging' : 'Discharging'}
+                             </span>
+                        </div>
+
+                        {/* Flow Animation Arrows Night */}
+                        {batterySimState === 'night' && (
+                             <div className="flex-1 h-1 bg-green-200 mx-2 relative overflow-hidden rounded-full">
+                                 <div className="absolute inset-0 bg-green-500 w-1/2" style={{ animation: 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></div>
+                             </div>
+                        )}
+                        {batterySimState === 'day' && (
+                             <div className="flex-1 h-1 bg-transparent mx-2"></div>
+                        )}
+
+                        {/* Home */}
+                        <div className={`flex flex-col items-center transition-opacity duration-500 ${batterySimState === 'night' ? 'opacity-100' : 'opacity-50'}`}>
+                             <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md mb-2">
+                                <Home className="w-6 h-6 text-slate-700" />
+                             </div>
+                             <span className={`text-[10px] font-bold ${batterySimState === 'night' ? 'text-white' : 'text-slate-600'}`}>Home</span>
+                        </div>
+                    </div>
+
+                    {/* Explanation Text Overlay */}
+                    <div className="absolute bottom-3 left-0 right-0 text-center">
+                        <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold backdrop-blur-md ${batterySimState === 'day' ? 'bg-white/80 text-orange-700' : 'bg-black/50 text-white border border-white/20'}`}>
+                            {batterySimState === 'day' ? 'Day: Storing Excess Energy' : 'Night: Using Free Battery Power'}
+                        </span>
+                    </div>
+                </div>
+                
+                <div className="bg-[#145A0D]/5 border border-[#145A0D]/10 rounded-xl p-4 text-center">
+                    <p className="text-sm font-medium text-[#145A0D] leading-relaxed">
+                        <span className="font-bold">Why it saves more:</span> You earn an additional <span className="font-extrabold underline decoration-[#145A0D]/30">30%</span> by using your own power compared to buying from TNB.
+                    </p>
+                </div>
+                
+                <button
+                    onClick={() => setShowBatteryInfo(false)}
+                    className="w-full mt-6 py-3.5 rounded-xl font-bold bg-[#145A0D] text-white shadow-lg shadow-[#145A0D]/20 hover:bg-[#0F450A] transition-all"
+                >
+                    Understood
+                </button>
+            </div>
+        </div>
+      )}
     </div>
   );
 }
